@@ -25,15 +25,19 @@ class MationHTML {
     }
   }
 
-  convert(html) {
+  convert(html, body = true) {
     if (typeof html !== "string") {
       throw new Error("Input must be a string.");
     }
 
     const parser = new DOMParser();
-    const htmlContent = parser.parseFromString(html, "text/html").body;
+    const htmlContent = parser.parseFromString(html, "text/html");
 
-    return this.#convertNode(htmlContent);
+    if (body) {
+      return this.#convertNode(htmlContent.body);
+    }
+
+    return this.#convertNode(htmlContent.documentElement);
   }
 
   #convertNode(element) {
