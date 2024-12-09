@@ -129,7 +129,7 @@ class MationHTML {
     }
 
     if (this.#noRuleFallback && typeof this.#noRuleFallback === "function") {
-      return this.#noRuleFallback();
+      return this.#noRuleFallback({ node, content, dataset });
     }
 
     console.warn(`No rule found for tag: <${tagName}>`);

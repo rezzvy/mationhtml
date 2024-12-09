@@ -17,7 +17,7 @@ This library takes an HTML string, parses it, and recursively applies conversion
 1. Include the source file in your project, either manually or by using our CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/rezzvy/mationhtml/dist/mationhtml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rezzvy/mationhtml@latest/dist/mationhtml.min.js"></script>
 ```
 
 2. Create an instance and register a rule:
