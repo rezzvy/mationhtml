@@ -3,6 +3,16 @@ class MationHTML {
     this.rules = [];
   }
 
+  #noRuleFallback = null;
+
+  set noRuleFallback(callback) {
+    if (typeof callback !== "function") {
+      throw new Error("Given callback should be a function.");
+    }
+
+    this.#noRuleFallback = callback;
+  }
+
   register(rule) {
     if (Array.isArray(rule)) {
       for (const item of rule) {
@@ -59,6 +69,10 @@ class MationHTML {
       return rule.to
         .replace(/{dataset\.(\w+)}/g, (_, key) => dataset[key] || "")
         .replace(/{content}/g, content);
+    }
+
+    if (this.#noRuleFallback && typeof this.#noRuleFallback === "function") {
+      return this.#noRuleFallback();
     }
 
     console.warn(`No rule found for tag: <${tagName}>`);
