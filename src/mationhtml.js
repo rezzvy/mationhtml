@@ -4,6 +4,7 @@ class MationHTML {
   }
 
   #noRuleFallback = null;
+  #ignoreTags = [];
 
   set noRuleFallback(callback) {
     if (typeof callback !== "function") {
@@ -11,6 +12,23 @@ class MationHTML {
     }
 
     this.#noRuleFallback = callback;
+  }
+
+  set ignoreTags(tags) {
+    if (!Array.isArray(tags)) {
+      throw new Error("Given tags should be an array of strings.");
+    }
+
+    for (const item of tags) {
+      if (typeof item !== "string") {
+        throw new Error("Each tag should be a string.");
+      }
+
+      const itemLowerCase = item.toLowerCase();
+      if (!this.#ignoreTags.includes(itemLowerCase)) {
+        this.#ignoreTags.push(itemLowerCase);
+      }
+    }
   }
 
   register(rule) {
@@ -47,6 +65,10 @@ class MationHTML {
       if (node.nodeType === Node.TEXT_NODE) {
         result += node.textContent;
       } else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (this.#ignoreTags.includes(node.tagName.toLowerCase())) {
+          continue;
+        }
+
         result += this.#convertElement(node);
       }
     }
