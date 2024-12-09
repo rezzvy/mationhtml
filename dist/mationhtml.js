@@ -90,7 +90,7 @@ class MationHTML {
       }
 
       return rule.to
-        .replace(/{dataset\.(\w+)}/g, (_, key) => dataset[key] || "")
+        .replace(/{dataset\.([\w-]+)}/g, (_, key) => dataset[key] || "")
         .replace(/{content}/g, content);
     }
 
