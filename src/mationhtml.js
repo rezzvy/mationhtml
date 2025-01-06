@@ -6,7 +6,7 @@ class MationHTML {
 
   /** @private */
   #noRuleFallback = null;
-  #ignoreTags = [];
+  #ignoreSelectors = [];
 
   /**
    * Sets the fallback callback function for elements with no matching rules.
@@ -22,22 +22,21 @@ class MationHTML {
 
   /**
    * Sets the tags to be ignored during conversion.
-   * @param {Array<string>} tags - An array of tag names (as strings) to be ignored.
+   * @param {Array<string>} selectors - An array of valid selectors (as strings) to be ignored.
    * @throws {Error} Throws an error if the input is not an array of strings.
    */
-  set ignoreTags(tags) {
-    if (!Array.isArray(tags)) {
+  set ignoreSelectors(selectors) {
+    if (!Array.isArray(selectors)) {
       throw new Error("Given tags should be an array of strings.");
     }
 
-    for (const item of tags) {
+    for (const item of selectors) {
       if (typeof item !== "string") {
-        throw new Error("Each tag should be a string.");
+        throw new Error("Each selector should be a string.");
       }
 
-      const itemLowerCase = item.toLowerCase();
-      if (!this.#ignoreTags.includes(itemLowerCase)) {
-        this.#ignoreTags.push(itemLowerCase);
+      if (!this.#ignoreSelectors.includes(item)) {
+        this.#ignoreSelectors.push(item);
       }
     }
   }
@@ -90,16 +89,17 @@ class MationHTML {
 
     for (const node of element.childNodes) {
       if (node.nodeType === Node.TEXT_NODE) {
-        result += node.textContent;
+        result += node.textContent.trim();
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        if (this.#ignoreTags.includes(node.tagName.toLowerCase())) {
+        if (this.#ignoreSelectors.some((selector) => node.matches(selector))) {
           continue;
         }
-        result += this.#convertElement(node);
+
+        result += this.#convertElement(node).trim();
       }
     }
 
-    return result;
+    return result.trim();
   }
 
   /**
@@ -108,8 +108,7 @@ class MationHTML {
    * @returns {string} - The converted content as a string.
    */
   #convertElement(node) {
-    const tagName = node.tagName.toLowerCase();
-    const rule = this.rules.find((rule) => rule.tag === tagName);
+    const rule = this.rules.find((rule) => node.matches(rule.selector));
 
     let content = this.#convertNode(node);
     let dataset = {};
@@ -120,19 +119,32 @@ class MationHTML {
 
     if (rule) {
       if (rule.format) {
-        return rule.format({ node, content, dataset });
+        const ruleFormat = rule.format({ node, content, dataset });
+
+        if (ruleFormat !== undefined) {
+          return ruleFormat;
+        }
+
+        throw new Error(`The format handler for the selector "${rule.selector}" must return a content.`);
       }
 
       return rule.to
         .replace(/{dataset\.([\w-]+)}/g, (_, key) => dataset[key] || "")
-        .replace(/{content}/g, content);
+        .replace(/{content}/g, content)
+        .replace(/{spacing}/g, "");
     }
 
     if (this.#noRuleFallback && typeof this.#noRuleFallback === "function") {
-      return this.#noRuleFallback({ node, content, dataset });
+      const noRuleFallback = this.#noRuleFallback({ node, content, dataset });
+
+      if (noRuleFallback !== undefined) {
+        return noRuleFallback;
+      }
+
+      throw new Error(`The noRuleFallback function must return a content`);
     }
 
-    console.warn(`No rule found for tag: <${tagName}>`);
+    console.warn(`No rule found for element: <${node.tagName}>`);
     return content;
   }
 
@@ -142,10 +154,8 @@ class MationHTML {
    * @throws {Error} Throws an error if the rule is invalid.
    */
   #validateRule(rule) {
-    if (typeof rule !== "object" || !rule.tag || !(rule.to || rule.format)) {
-      throw new Error(
-        'Invalid rule: Must have a "tag" and a "format" or "to".'
-      );
+    if (typeof rule !== "object" || !rule.selector || !(rule.to || rule.format)) {
+      throw new Error('Invalid rule: Must have a "selector" and a "format" or "to".');
     }
   }
 }

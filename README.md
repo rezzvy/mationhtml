@@ -29,7 +29,7 @@ const mationHTML = new MationHTML();
 // Register a rule
 mationHTML.register([
   {
-    tag: "b",
+    selector: "b",
     to: "**{content}**",
   },
 ]);
@@ -54,20 +54,20 @@ mationHTML.convert("<b>Hello World</b>");
 
 ### Available Properties
 
-| Name             | Description                                                                                                        | Type            | Value Explanation                                                                                                      |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `noRuleFallback` | A function to be executed when no matching rule is found for a tag. If defined, it overrides the default behavior. | `function`      | - Should return a string to replace content when no rules match. <br> - Example: `(api) => api.content.toUpperCase();` |
-| `ignoreTags`     | An array of tag names that should be ignored during conversion.                                                    | `Array<string>` | - Specifies tags to skip during conversion. <br> - Example: `["i", "u"]` ignores `<i>` and `<u>` tags entirely.        |
+| Name              | Description                                                                                                        | Type            | Value Explanation                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------ | --------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `noRuleFallback`  | A function to be executed when no matching rule is found for a tag. If defined, it overrides the default behavior. | `function`      | - Should return a string to replace content when no rules match. <br> - Example: `(api) => api.content.toUpperCase();` |
+| `ignoreSelectors` | An array of selectors that should be ignored during conversion.                                                    | `Array<string>` | - Specifies tags to skip during conversion. <br> - Example: `["i", "u"]` ignores `<i>` and `<u>` tags entirely.        |
 
 ### Rule Object
 
 The `register()` method accepts rule objects with the following structure:
 
-| Property            | Value                                                                                                                                                                                                                                      | Example                              |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
-| `tag`               | The HTML tag to match in the input string.                                                                                                                                                                                                 | `"b"`                                |
-| `to`                | The string format to convert the entire tag into. Use `{content}` to reference the content inside the tag. To access an attribute, use `{dataset.attributeName}` (replace `attributeName` with the actual attribute name).                 | `"[a='{dataset.src}']{content}[/a]"` |
-| `format` _optional_ | A function that receives an object with `content` (text inside the tag), `dataset` (attributes of the tag), and `node` (the node itself). This function should return the formatted string and will override the `to` property if defined. | `(api) => [b]${api.content}[/b]`    |
+| Property            | Value                                                                                                                                                                                                                                                                         | Example                              |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `selector`          | The selector / HTML tag to match in the input string.                                                                                                                                                                                                                         | `"b"`                                |
+| `to`                | The string format to convert the entire tag into. Use `{content}` to reference the content inside the tag. To access an attribute, use `{dataset.attributeName}` (replace `attributeName` with the actual attribute name), to output empty content, use the keyword `{null}`. | `"[a='{dataset.src}']{content}[/a]"` |
+| `format` _optional_ | A function that receives an object with `content` (text inside the tag), `dataset` (attributes of the tag), and `node` (the node itself). This function should return the formatted string and will override the `to` property if defined.                                    | `(api) => [b]${api.content}[/b]`     |
 
 ## Default Behaviour
 
