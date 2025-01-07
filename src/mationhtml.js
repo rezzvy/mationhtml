@@ -108,7 +108,7 @@ class MationHTML {
    * @returns {string} - The converted content as a string.
    */
   #convertElement(node) {
-    const rule = this.rules.find((rule) => node.matches(rule.selector));
+    const matchingRules = this.rules.filter((rule) => node.matches(rule.selector));
 
     let content = this.#convertNode(node);
     let dataset = {};
@@ -117,21 +117,27 @@ class MationHTML {
       dataset[attr.name] = attr.value;
     }
 
-    if (rule) {
-      if (rule.format) {
-        const ruleFormat = rule.format({ node, content, dataset });
+    if (matchingRules.length > 0) {
+      let tempContent = content;
 
-        if (ruleFormat !== undefined) {
-          return ruleFormat;
+      for (const rule of matchingRules) {
+        if (rule.format) {
+          const ruleFormat = rule.format({ node, content: tempContent, dataset });
+
+          if (ruleFormat !== undefined) {
+            tempContent = ruleFormat;
+          } else {
+            throw new Error(`The format handler for the selector "${rule.selector}" must return content.`);
+          }
+        } else {
+          tempContent = rule.to
+            .replace(/{dataset\.([\w-]+)}/g, (_, key) => dataset[key] || "")
+            .replace(/{content}/g, tempContent)
+            .replace(/{spacing}/g, "");
         }
-
-        throw new Error(`The format handler for the selector "${rule.selector}" must return a content.`);
       }
 
-      return rule.to
-        .replace(/{dataset\.([\w-]+)}/g, (_, key) => dataset[key] || "")
-        .replace(/{content}/g, content)
-        .replace(/{spacing}/g, "");
+      return tempContent;
     }
 
     if (this.#noRuleFallback && typeof this.#noRuleFallback === "function") {
@@ -141,7 +147,7 @@ class MationHTML {
         return noRuleFallback;
       }
 
-      throw new Error(`The noRuleFallback function must return a content`);
+      throw new Error(`The noRuleFallback function must return content`);
     }
 
     console.warn(`No rule found for element: <${node.tagName}>`);
