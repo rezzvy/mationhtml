@@ -5,6 +5,7 @@ class MationHTML {
 
   #noRuleFallback = null;
   #ignoreSelectors = [];
+  #placeholders = [];
 
   set noRuleFallback(callback) {
     if (typeof callback !== "function") {
@@ -29,6 +30,21 @@ class MationHTML {
     }
   }
 
+  registerPlaceholder(rule) {
+    const rules = Array.isArray(rule) ? rule : [rule];
+
+    for (const item of rules) {
+      if (!item || typeof item !== "object" || typeof item.from !== "string" || typeof item.to !== "string") {
+        throw new Error("Each placeholder must be an object with 'from' and 'to' as strings.");
+      }
+
+      this.#placeholders.push({
+        from: item.from,
+        to: item.to,
+      });
+    }
+  }
+
   register(rule) {
     if (Array.isArray(rule)) {
       for (const item of rule) {
@@ -49,13 +65,17 @@ class MationHTML {
     const parser = new DOMParser();
     const htmlContent = parser.parseFromString(html, "text/html");
 
-    if (body) {
-      return this.#convertNode(htmlContent.body);
+    const target = body ? htmlContent.body : htmlContent.documentElement;
+    let result = this.#convertNode(target);
+
+    for (const item of this.#placeholders) {
+      result = result.replaceAll(item.from, item.to);
     }
-    return this.#convertNode(htmlContent.documentElement);
+
+    return result;
   }
 
-  #convertNode(element) {
+  #convertNode(element, depth = 0) {
     let result = "";
 
     for (const node of element.childNodes) {
@@ -66,17 +86,16 @@ class MationHTML {
           continue;
         }
 
-        result += this.#convertElement(node).trim();
+        result += this.#convertElement(node, depth + 1).trim();
       }
     }
 
     return result.trim();
   }
 
-  #convertElement(node) {
+  #convertElement(node, depth) {
     const matchingRules = this.rules.filter((rule) => node.matches(rule.selector));
-
-    let content = this.#convertNode(node);
+    let content = this.#convertNode(node, depth);
     let dataset = {};
 
     for (const attr of node.attributes) {
@@ -88,7 +107,7 @@ class MationHTML {
 
       for (const rule of matchingRules) {
         if (rule.format) {
-          const ruleFormat = rule.format({ node, content: tempContent, dataset });
+          const ruleFormat = rule.format({ node, content: tempContent, dataset, depth });
 
           if (ruleFormat !== undefined) {
             tempContent = ruleFormat;
@@ -107,7 +126,7 @@ class MationHTML {
     }
 
     if (this.#noRuleFallback && typeof this.#noRuleFallback === "function") {
-      const noRuleFallback = this.#noRuleFallback({ node, content, dataset });
+      const noRuleFallback = this.#noRuleFallback({ node, content, dataset, depth });
 
       if (noRuleFallback !== undefined) {
         return noRuleFallback;

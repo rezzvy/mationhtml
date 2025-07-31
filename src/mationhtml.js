@@ -7,6 +7,7 @@ class MationHTML {
   /** @private */
   #noRuleFallback = null;
   #ignoreSelectors = [];
+  #placeholders = [];
 
   /**
    * Sets the fallback callback function for elements with no matching rules.
@@ -42,6 +43,31 @@ class MationHTML {
   }
 
   /**
+   * Registers one or more placeholder replacements to be applied after conversion.
+   * Placeholders are replaced in the final converted output using string replacement.
+   *
+   * @param {Object|Array<Object>} rule - A placeholder rule or array of rules.
+   * Each rule must be an object with the following properties:
+   *   - {string} from - The placeholder string to search for.
+   *   - {string} to - The replacement string to replace the placeholder.
+   * @throws {Error} Throws an error if a rule is not an object or if 'from' or 'to' are not strings.
+   */
+  registerPlaceholder(rule) {
+    const rules = Array.isArray(rule) ? rule : [rule];
+
+    for (const item of rules) {
+      if (!item || typeof item !== "object" || typeof item.from !== "string" || typeof item.to !== "string") {
+        throw new Error("Each placeholder must be an object with 'from' and 'to' as strings.");
+      }
+
+      this.#placeholders.push({
+        from: item.from,
+        to: item.to,
+      });
+    }
+  }
+
+  /**
    * Registers a new rule or multiple rules for conversion.
    * @param {Object|Array<Object>} rule - A rule or an array of rules to be registered.
    * @throws {Error} Throws an error if the rule is invalid.
@@ -73,10 +99,14 @@ class MationHTML {
     const parser = new DOMParser();
     const htmlContent = parser.parseFromString(html, "text/html");
 
-    if (body) {
-      return this.#convertNode(htmlContent.body);
+    const target = body ? htmlContent.body : htmlContent.documentElement;
+    let result = this.#convertNode(target);
+
+    for (const item of this.#placeholders) {
+      result = result.replaceAll(item.from, item.to);
     }
-    return this.#convertNode(htmlContent.documentElement);
+
+    return result;
   }
 
   /**
