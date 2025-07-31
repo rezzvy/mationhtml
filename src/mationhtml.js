@@ -84,7 +84,7 @@ class MationHTML {
    * @param {Node} element - The DOM element to be converted.
    * @returns {string} - The converted content as a string.
    */
-  #convertNode(element) {
+  #convertNode(element, depth = 0) {
     let result = "";
 
     for (const node of element.childNodes) {
@@ -95,7 +95,7 @@ class MationHTML {
           continue;
         }
 
-        result += this.#convertElement(node).trim();
+        result += this.#convertElement(node, depth + 1).trim();
       }
     }
 
@@ -107,10 +107,9 @@ class MationHTML {
    * @param {Element} node - The DOM element to be converted.
    * @returns {string} - The converted content as a string.
    */
-  #convertElement(node) {
+  #convertElement(node, depth) {
     const matchingRules = this.rules.filter((rule) => node.matches(rule.selector));
-
-    let content = this.#convertNode(node);
+    let content = this.#convertNode(node, depth);
     let dataset = {};
 
     for (const attr of node.attributes) {
@@ -122,7 +121,7 @@ class MationHTML {
 
       for (const rule of matchingRules) {
         if (rule.format) {
-          const ruleFormat = rule.format({ node, content: tempContent, dataset });
+          const ruleFormat = rule.format({ node, content: tempContent, dataset, depth });
 
           if (ruleFormat !== undefined) {
             tempContent = ruleFormat;
@@ -141,7 +140,7 @@ class MationHTML {
     }
 
     if (this.#noRuleFallback && typeof this.#noRuleFallback === "function") {
-      const noRuleFallback = this.#noRuleFallback({ node, content, dataset });
+      const noRuleFallback = this.#noRuleFallback({ node, content, dataset, depth });
 
       if (noRuleFallback !== undefined) {
         return noRuleFallback;
