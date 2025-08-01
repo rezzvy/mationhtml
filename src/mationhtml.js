@@ -119,17 +119,17 @@ class MationHTML {
 
     for (const node of element.childNodes) {
       if (node.nodeType === Node.TEXT_NODE) {
-        result += node.textContent.trim();
+        result += node.textContent;
       } else if (node.nodeType === Node.ELEMENT_NODE) {
         if (this.#ignoreSelectors.some((selector) => node.matches(selector))) {
           continue;
         }
 
-        result += this.#convertElement(node, depth + 1).trim();
+        result += this.#convertElement(node, depth + 1);
       }
     }
 
-    return result.trim();
+    return result;
   }
 
   /**
