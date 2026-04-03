@@ -1,6 +1,6 @@
 {
   "name": "mationhtml",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Transform HTML into absolutely any format imaginable.",
   "main": "dist/mationhtml.node.js",
   "repository": {
