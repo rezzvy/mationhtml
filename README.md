@@ -36,7 +36,8 @@ npm install mationhtml
 ```
 
 ```javascript
-const converter = require("mationhtml");
+const MationHTML = require("mationhtml");
+const converter = new MationHTML();
 ```
 
 ### Usage
